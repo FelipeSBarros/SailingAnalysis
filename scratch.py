@@ -210,7 +210,7 @@ fig.show()
 
 
 # test from OpenWeatherMap
-STEP = len(gpx) // 5
+STEP = len(gpx) // 20
 weather = {"DateTime": [], "lon": [], "lat": [], "wind_speed": [], "wind_deg": []}
 
 for ind in range(gpx.index.start, gpx.index.stop, STEP):
