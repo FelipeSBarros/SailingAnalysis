@@ -2,5 +2,21 @@
 
 Package under construction to automate data analysis from sailing boats.
 
-- [Meteorological forecast](https://meteostat.net/en/station/87178?t=2022-09-10/2022-09-11);
-- [Open Weather Map](https://api.openweathermap.org/data/2.5/onecall)
+## Functionalities:
+- Get sailing track from GPX and save it on a spatially enabled database:
+  - [ ] [SpatialLite](https://live.osgeo.org/es/overview/spatialite_overview.html)
+  - [ ] [PostGIS](https://postgis.net/);
+- For each track segment, use [MovingPandas](https://movingpandas.github.io/movingpandas/) to calculate:
+  - [ ] Boat direction;
+  - [ ] Boat distance traveled;
+  - [ ] Boat speed;
+  - [ ] Time delta;
+- Get weather forecast for the sailing date:
+  - [ ] [Meteorological forecast](https://meteostat.net/en/station/87178);
+  - [ ] [Open Weather Map](https://openweathermap.org/api/one-call-3#history)
+- Incorporate weather information to sailing track
+- Generate sailing report with:
+  - General overview about:
+  - [ ] Weather conditions;
+  - [ ] Sailing;
+  - [ ] Maps;
