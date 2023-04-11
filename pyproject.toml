@@ -13,6 +13,7 @@ datetime = "^5.1"
 fiona = "^1.9.3"
 geopandas = "^0.12.2"
 movingpandas = "^0.15rc1"
+python-dotenv = "^1.0.0"
 
 
 [build-system]
