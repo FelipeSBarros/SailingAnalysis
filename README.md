@@ -12,8 +12,7 @@ Package under construction to automate data analysis from sailing boats.
   - [ ] Boat speed;
   - [ ] Time delta;
 - Get weather forecast for the sailing date:
-  - [ ] [Meteorological forecast](https://meteostat.net/en/station/87178);
-    - [ ] Try [API](https://dev.meteostat.net/guide.html#our-services)
+  - [X] Get Weather Station data and Weather data using [meteostat](https://meteostat.net/en/station/87178) [Python API](https://dev.meteostat.net/guide.html#our-services)
   - [ ] [Open Weather Map](https://openweathermap.org/api/one-call-3#history)
 - Incorporate weather information to sailing track
 - Generate sailing report with:
