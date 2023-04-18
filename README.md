@@ -3,7 +3,7 @@
 Package under construction to automate data analysis from sailing boats.
 
 ## Functionalities:
-- Get sailing track from GPX and save it on a spatially enabled database:
+- Get sailing track from GPX and save it on a spatially enabled database (using [GeoAlchemy2](https://geoalchemy-2.readthedocs.io/en/latest/):
   - [ ] [SpatialLite](https://live.osgeo.org/es/overview/spatialite_overview.html)
   - [ ] [PostGIS](https://postgis.net/);
 - For each track segment, use [MovingPandas](https://movingpandas.github.io/movingpandas/) to calculate:
