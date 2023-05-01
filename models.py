@@ -1,18 +1,20 @@
 import os
 from typing_extensions import Annotated
-
+from sqlalchemy.dialects.postgresql import UUID  # https://stackoverflow.com/a/74367684
 from sqlalchemy.schema import FetchedValue
 from datetime import datetime
-from sqlalchemy import func
+from sqlalchemy import func, Integer
 from dotenv import load_dotenv
-from sqlalchemy import String, Float, DateTime, ForeignKey, create_engine
+from sqlalchemy import String, Float, DateTime, ForeignKey, create_engine, Column
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     mapped_column,
     relationship,
     sessionmaker,
+    declarative_base,
 )
+from geoalchemy2 import Geometry
 
 load_dotenv()
 # DB_NAME = os.getenv("DB_NAME")
@@ -129,3 +131,31 @@ class Weather(Base):
         nullable=True, comment="The weather condition code"
     )
     created_at: Mapped[timestamp]
+
+
+class SailingTrack(Base):
+    __tablename__ = "sailing_track"
+    id: Mapped[int] = mapped_column(primary_key=True)  # todo use uuri
+    track_id: Mapped[str] = mapped_column(
+        nullable=False, comment="ID created from Datetime track iso as uuid"
+    )
+    track_fid: Mapped[int] = mapped_column(
+        nullable=False,
+        comment="Track feature ID",
+    )
+    track_seg_id: Mapped[int] = mapped_column(
+        nullable=False,
+        comment="Track segment ID",
+    )
+    track_seg_point_id: Mapped[int] = mapped_column(
+        nullable=False,
+        comment="Track segment point ID",
+    )
+    ele: Mapped[float] = mapped_column(
+        nullable=False,
+        comment="Elevation",
+    )
+    time: Mapped[datetime] = mapped_column(
+        nullable=False, comment="The datetime of the observation"
+    )
+    geometry = Column(Geometry(geometry_type="POINT", srid=4326))

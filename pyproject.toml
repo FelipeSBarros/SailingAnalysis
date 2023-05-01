@@ -15,8 +15,12 @@ geopandas = "^0.12.2"
 movingpandas = "^0.15rc1"
 python-dotenv = "^1.0.0"
 meteostat = "^1.6.5"
-sqlalchemy = "^2.0.9"
 alembic = "^1.10.3"
+spatialite = "^0.0.3"
+geoalchemy2 = "^0.13.2"
+psycopg2-binary = "^2.9.6"
+sqlalchemy = "^2.0.10"
+jsonlines = "^3.1.0"
 
 
 [build-system]

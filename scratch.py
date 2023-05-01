@@ -209,29 +209,3 @@ fig.update_traces(line=dict(width=5))
 fig.show()
 
 
-# test from OpenWeatherMap
-STEP = len(gpx) // 20
-weather = {"DateTime": [], "lon": [], "lat": [], "wind_speed": [], "wind_deg": []}
-
-for ind in range(gpx.index.start, gpx.index.stop, STEP):
-    # ind = gpx.index[0]
-    lat = gpx.geometry.y[ind]
-    lon = gpx.geometry.x[ind]
-    time = int(gpx.time[ind].timestamp())
-    # url = f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&mode=metric&exclude=[current, minutely, daily, alerts]&lang=es&appid={OWM_KEY}"
-    url = f"https://api.openweathermap.org/data/2.5/onecall/timemachine?lat={lat}&lon={lon}&units=metric&dt={time}&lang=es&appid={OWM_KEY}"
-    # url = f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=39.099724&lon=-94.578331&units=metric&dt=1643803200&appid={OWM_KEY}"
-    resp = requests.get(url=url)
-    data = resp.json()
-    # data.keys()
-    # data.get("current").get("wind_speed")
-    # data.get("current").get("wind_deg")
-    weather.get("DateTime").append(gpx.time[ind])
-    weather.get("lat").append(gpx.geometry[ind].y)
-    weather.get("lon").append(gpx.geometry[ind].x)
-    weather.get("wind_speed").append(data.get("current").get("wind_speed"))
-    weather.get("wind_deg").append(data.get("current").get("wind_deg"))
-
-weather_ = pd.DataFrame(weather)
-weather_.iloc[0]
-weather_.to_csv("./data/OpenWeatherMap.csv")
