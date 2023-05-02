@@ -33,7 +33,7 @@ def create_id(track_df):
     return uuid.uuid5(uuid.NAMESPACE_DNS, track_df.time.iloc[0].isoformat())
 
 
-def save_track(track_df, post_gis=False):
+def save_track(track_df, name, post_gis=False):
     if post_gis:
         with Session() as session:
             record_exists = (
@@ -56,14 +56,13 @@ def save_track(track_df, post_gis=False):
                 )
                 logging.warning(f"Sailing track saved: {track_df.track_id[0]}")
     else:
-        track_df["track_id"] = str(track_df["track_id"][0])
         track_df.to_file(
             "SailingAnalysis.gpkg",
-            layer=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}",
+            layer=name,
             driver="GPKG",
         )
         logging.warning(
-            f"Sailing track {track_df.track_id[0]} saved on SailingAnalysis.gpkg"
+            f"Sailing track {name} saved on SailingAnalysis.gpkg"
         )
 
 
@@ -83,9 +82,10 @@ def export_gpx(
 
     # create track_id
     track_df["track_id"] = create_id(track_df)
-
+    track_df["track_id"] = str(track_df["track_id"][0])
     # conversion to a movingpandas' track
     # test if track_seg_point_id column exist
+    logging.warning(f"Creating trjectory from track points")
     trajectory = mpd.Trajectory(df=track_df, traj_id="track_seg_point_id", t="time")
     # calculate few track attributes
     trajectory.add_acceleration(overwrite=True)
@@ -94,14 +94,12 @@ def export_gpx(
     trajectory.add_distance(overwrite=True)  # in meters
     trajectory.add_speed(overwrite=True)  # in meters per second
     trajectory.add_timedelta(overwrite=True)
+    trajectory.df.timedelta = trajectory.df.timedelta.dt.total_seconds()
     trajectory.df.direction = round(trajectory.df.direction, 1)
 
     # persist on database
-    # save_track(track_df)  # todo test if not saved yet
-    # track_df.set_index("track_seg_point_id", inplace=True)
-    # trajectory.df.set_index("track_seg_point_id", inplace=True)
-    # trajectory.df.join(track_df)
-    # save_track(trajectory.df)
+    save_track(track_df, name=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}")  # todo test if not saved yet
+    save_track(trajectory.df, name=f"{trajectory.df.index[0].date().isoformat()}_{trajectory.df.track_id[0]}")
     return track_df, trajectory
 
 
