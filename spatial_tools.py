@@ -86,20 +86,23 @@ def export_gpx(
 
     # conversion to a movingpandas' track
     # test if track_seg_point_id column exist
-    trajectory = mpd.Trajectory(track_df, traj_id="track_seg_point_id", t="time")
+    trajectory = mpd.Trajectory(df=track_df, traj_id="track_seg_point_id", t="time")
     # calculate few track attributes
+    trajectory.add_acceleration(overwrite=True)
+    trajectory.add_angular_difference(overwrite=True)
     trajectory.add_direction(overwrite=True)
     trajectory.add_distance(overwrite=True)  # in meters
     trajectory.add_speed(overwrite=True)  # in meters per second
     trajectory.add_timedelta(overwrite=True)
-    trajectory.df.direction = round(traj.df.direction, 1)
+    trajectory.df.direction = round(trajectory.df.direction, 1)
 
     # persist on database
-    save_track(track_df)
+    # save_track(track_df)  # todo test if not saved yet
     # track_df.set_index("track_seg_point_id", inplace=True)
     # trajectory.df.set_index("track_seg_point_id", inplace=True)
     # trajectory.df.join(track_df)
     # save_track(trajectory.df)
+    return track_df, trajectory
 
 
 def get_unique_hours(track_df):
@@ -107,7 +110,7 @@ def get_unique_hours(track_df):
 
 
 # test from OpenWeatherMap
-STEP = len(track_df) // 20  # amount of data to be requested
+STEP = 2  # len(track_df) // 20  # amount of data to be requested
 # OWM_DATA = {"DateTime": [], "lon": [], "lat": [], "wind_speed": [], "wind_deg": []}
 
 
@@ -172,7 +175,7 @@ def save_OWM_data(owm_data):
     logging.warning(f"OWM data saved")
 
 
-def create_map(track=track_df, map_title="Regata", start=None, stop=None):
+def create_map(track, map_title="Regata", start=None, stop=None):
     t = mpl.markers.MarkerStyle(marker="^")
     if start:
         track = track[(track.time > start)]
@@ -207,17 +210,45 @@ def create_map(track=track_df, map_title="Regata", start=None, stop=None):
     # plt.show()
 
 
-create_map(track=track_df, map_title="FULL")
-# create_map(track=trajectory, map_title="FULL")
+def create_traj_map(traj, map_title="Traj", start=None, stop=None, attribute="speed"):
+    traj = traj.copy()
+    t = mpl.markers.MarkerStyle(marker="^")
+    t2 = mpl.markers.MarkerStyle(marker="2")
+    if start:
+        traj.df = traj.df[start:]
+    if stop:
+        traj.df = traj.df[:stop]
+    # getting bound and expanding to the plot
+    aoi_bounds = traj.df.geometry.total_bounds
+    xlim = [aoi_bounds[0] - 0.0025, aoi_bounds[2] + 0.0025]
+    ylim = [aoi_bounds[1] - 0.0025, aoi_bounds[3] + 0.0025]
 
-start_time = datetime(2023, 4, 23, 9, tzinfo=BAIRES_TZ)
-stop_time = datetime(2023, 4, 23, 11, tzinfo=BAIRES_TZ)
-create_map(
-    track=track_df,
-    map_title="inicio",
-    start=start_time,
-    stop=stop_time,
-)
+    f, ax = plt.subplots(figsize=(15, 20))
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    traj.plot(
+        attribute,
+        linewidth=3,
+        legend=True,
+        legend_kwds={"shrink": 0.3},
+        ax=ax,
+        cmap="Reds",
+    )
+
+    # for i, row in weather_data.iterrows():
+    #     markersize = 25
+    #     t._transform = t.get_transform().rotate_deg(row.wind_deg)
+    #     t2._transform = t2.get_transform().rotate_deg(row.wind_deg)
+    #     ax.scatter(row.lon, row.lat, marker=t, s=100)
+    # ax.plot(row.lon, row.lat, marker=t2, c='k', markersize=30, linestyle='None')
+
+    ctx.add_basemap(ax, crs=traj.crs, source=ctx.providers.OpenStreetMap.get("Mapnik"))
+    plt.title(map_title, fontdict={"size": 18})
+    plt.savefig(
+        fname=f"{attribute}_{map_title}.png",
+        dpi="figure",
+        format="png",
+    )
 
 
 # weather_data.columns
@@ -235,21 +266,21 @@ create_map(
 
 
 # reading weather conditions
-met = pd.read_csv(
-    WEATHER_FORECAST
-)  # source https://meteostat.net/en/station/87178?t=2023-04-04/2023-04-10
+# met = pd.read_csv(
+#     WEATHER_FORECAST
+# )  # source https://meteostat.net/en/station/87178?t=2023-04-04/2023-04-10
 # filtering columns
-met = met[["time", "temp", "wdir", "wspd", "pres"]]
+# met = met[["time", "temp", "wdir", "wspd", "pres"]]
 # filtering row considering hour of the sailing track
-met = met[met.time.isin(hours)]
+# met = met[met.time.isin(hours)]
 # met.time = pd.to_datetime(met.time, utc=True).dt.tz_convert(tz=BAIRES_TZ)
-met["hora"] = pd.to_datetime(met.time, utc=False)
-met = met.drop("time", axis=1)
+# met["hora"] = pd.to_datetime(met.time, utc=False)
+# met = met.drop("time", axis=1)
 
 # todo descobrir o que estou fazendo
-gpx = gpx.assign(hora=gpx.time.dt.strftime("%Y-%m-%d %H:00:00"))
-gpx.hora = pd.to_datetime(gpx.hora, utc=False)
+# gpx = gpx.assign(hora=gpx.time.dt.strftime("%Y-%m-%d %H:00:00"))
+# gpx.hora = pd.to_datetime(gpx.hora, utc=False)
 
 # merge GPX and weather data
-gpx = pd.merge(gpx, met, on="hora", how="left")
-gpx = gpx.dropna(axis=1)
+# gpx = pd.merge(gpx, met, on="hora", how="left")
+# gpx = gpx.dropna(axis=1)
