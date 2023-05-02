@@ -90,7 +90,7 @@ class WeatherStation(Base):
     created_at: Mapped[timestamp]
 
 
-class Weather(Base):
+class Weather(Base):  # Todo relacionar com track_id
     __tablename__ = "weather"
 
     id: Mapped[int] = mapped_column(primary_key=True)  # todo use uuri
@@ -159,3 +159,32 @@ class SailingTrack(Base):
         nullable=False, comment="The datetime of the observation"
     )
     geometry = Column(Geometry(geometry_type="POINT", srid=4326))
+
+
+class OWM_data(Base):  # Todo relacionar com track_id
+    __tablename__ = "owm_data"
+
+    id: Mapped[int] = mapped_column(primary_key=True)  # todo use uuri
+    time: Mapped[datetime] = mapped_column(
+        nullable=True, comment="The datetime of the observation	"
+    )
+    temp: Mapped[float] = mapped_column(
+        nullable=False, comment="The air temperature in °C"
+    )
+    humidity: Mapped[float] = mapped_column(nullable=False, comment="Humidity, %")
+    wind_deg: Mapped[float] = mapped_column(
+        nullable=False, comment="Wind direction, degrees"
+    )
+    wind_speed: Mapped[float] = mapped_column(
+        nullable=False, comment="Wind speed in metre/sec"
+    )
+    pressure: Mapped[float] = mapped_column(
+        nullable=True, comment="Atmospheric pressure on the sea level, hPa"
+    )
+    latitude: Mapped[float] = mapped_column(
+        nullable=False, comment="The latitude of the model location"
+    )
+    longitude: Mapped[float] = mapped_column(
+        nullable=False, comment="The longitude of the model location"
+    )
+    created_at: Mapped[timestamp]
