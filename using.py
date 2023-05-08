@@ -32,3 +32,13 @@ create_traj_map(
     start=datetime(2023, 4, 23, 10, 5),
     stop=datetime(2023, 4, 23, 12, 55),
 )
+
+
+create_traj_map(
+    traj=trajectory,
+    map_title="Senida",
+    start=datetime(2023, 4, 23, 12, 38),
+    stop=datetime(2023, 4, 23, 13, 0),
+)
+
+weather_data[["wind_deg", 'wind_speed', 'time']]

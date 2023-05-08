@@ -98,8 +98,8 @@ def export_gpx(
     trajectory.df.direction = round(trajectory.df.direction, 1)
 
     # persist on database
-    save_track(track_df, name=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}")  # todo test if not saved yet
-    save_track(trajectory.df, name=f"{trajectory.df.index[0].date().isoformat()}_{trajectory.df.track_id[0]}")
+    save_track(track_df, name=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}_track_points")  # todo test if not saved yet
+    save_track(trajectory.to_line_gdf(), name=f"{trajectory.df.index[0].date().isoformat()}_{trajectory.df.track_id[0]}_trajectory")
     return track_df, trajectory
 
 
