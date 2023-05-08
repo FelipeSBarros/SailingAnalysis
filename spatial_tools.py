@@ -61,9 +61,7 @@ def save_track(track_df, name, post_gis=False):
             layer=name,
             driver="GPKG",
         )
-        logging.warning(
-            f"Sailing track {name} saved on SailingAnalysis.gpkg"
-        )
+        logging.warning(f"Sailing track {name} saved on SailingAnalysis.gpkg")
 
 
 def export_gpx(
@@ -98,8 +96,14 @@ def export_gpx(
     trajectory.df.direction = round(trajectory.df.direction, 1)
 
     # persist on database
-    save_track(track_df, name=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}_track_points")  # todo test if not saved yet
-    save_track(trajectory.to_line_gdf(), name=f"{trajectory.df.index[0].date().isoformat()}_{trajectory.df.track_id[0]}_trajectory")
+    save_track(
+        track_df,
+        name=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}_track_points",
+    )  # todo test if not saved yet
+    save_track(
+        trajectory.to_line_gdf(),
+        name=f"{trajectory.df.index[0].date().isoformat()}_{trajectory.df.track_id[0]}_trajectory",
+    )
     return track_df, trajectory
 
 
@@ -108,11 +112,11 @@ def get_unique_hours(track_df):
 
 
 # test from OpenWeatherMap
-STEP = 2  # len(track_df) // 20  # amount of data to be requested
+# len(track_df) // 20  # amount of data to be requested
 # OWM_DATA = {"DateTime": [], "lon": [], "lat": [], "wind_speed": [], "wind_deg": []}
 
 
-def get_OWM_data(track_df, step=STEP):
+def get_OWM_data(track_df, step=2):
     jsonl_path = Path(f"./data/{track_df.track_id[0]}_OWM_weather.jsonl")
     if jsonl_path.exists():
         logging.warning(f"{jsonl_path} already exists")
@@ -146,7 +150,7 @@ def process_OWM_data(track_df):
         ],
         axis=1,
     )
-    weather_data["time"] = weather_data.dt.apply(datetime.fromtimestamp)
+    weather_data["time"] = weather_data.dt.apply(datetime.fromtimestamp, tz=BAIRES_TZ)
     weather_data.drop(
         [
             "timezone",
@@ -173,12 +177,17 @@ def save_OWM_data(owm_data):
     logging.warning(f"OWM data saved")
 
 
-def create_map(track, map_title="Regata", start=None, stop=None):
+def create_map(track, map_title="Regata", start=None, stop=None, weather=None):
     t = mpl.markers.MarkerStyle(marker="^")
     if start:
         track = track[(track.time > start)]
+        if weather is not None:
+            weather = weather[(weather.time > start)]
     if stop:
         track = track[(track.time < stop)]
+        if weather is not None:
+            weather_data = weather[(weather.time < stop)]
+
     # getting bound and expanding to the plot
     aoi_bounds = track.geometry.total_bounds
     xlim = [aoi_bounds[0] - 0.0025, aoi_bounds[2] + 0.0025]
@@ -188,10 +197,49 @@ def create_map(track, map_title="Regata", start=None, stop=None):
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     track.plot(ax=ax)
-    for i, row in weather_data.iterrows():
-        markersize = 25
-        t._transform = t.get_transform().rotate_deg(row.wind_deg)
-        ax.scatter(row.lon, row.lat, marker=t, s=100)
+    if weather_data is not None:
+        for i, row in weather.iterrows():
+            # i, row = list(weather_data.iterrows())[0]
+            markersize = 25
+            t._transform = t.get_transform().rotate_deg(row.wind_deg)
+            # ax.scatter(row.lon, row.lat, marker=t, s=100)
+            plt.plot(
+                row.lon + 0.0005,
+                row.lat + 0.0005,
+                marker=(3, 0, row.wind_deg),
+                c="k",
+                markersize=15,
+                linestyle="None",
+                alpha=0.3,
+            )
+            plt.plot(
+                row.lon + 0.0005,
+                row.lat + 0.0005,
+                marker=(2, 0, row.wind_deg),
+                c="k",
+                markersize=30,
+                linestyle="None",
+                alpha=0.3,
+            )
+            plt.plot(
+                row.lon + 0.0005,
+                row.lat + 0.0005,
+                marker=(2, 0, row.wind_deg + 45),
+                c="red",
+                markersize=50,
+                linestyle="None",
+                alpha=0.3,
+            )
+            plt.plot(
+                row.lon + 0.0005,
+                row.lat + 0.0005,
+                marker=(2, 0, row.wind_deg - 45),
+                c="red",
+                markersize=50,
+                linestyle="None",
+                alpha=0.3,
+            )
+
     ctx.add_basemap(ax, crs=track.crs, source=ctx.providers.OpenStreetMap.get("Mapnik"))
     plt.title(map_title, fontdict={"size": 18})
     plt.savefig(
