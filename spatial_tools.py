@@ -4,7 +4,15 @@ from pathlib import Path
 import contextily as ctx
 import requests
 
-from models import engine, Session, WeatherStation, Weather, SailingTrack, OWM_data
+from models import (
+    engine,
+    Session,
+    WeatherStation,
+    Weather,
+    SailingTrackPoints,
+    OWM_data,
+    SailingTrackLine,
+)
 import fiona
 import geopandas as gpd
 import movingpandas as mpd
@@ -33,35 +41,38 @@ def create_id(track_df):
     return uuid.uuid5(uuid.NAMESPACE_DNS, track_df.time.iloc[0].isoformat())
 
 
-def save_track(track_df, name, post_gis=False):
+def save_track(track_df, name, post_gis=False, model=SailingTrackPoints):
     if post_gis:
         with Session() as session:
             record_exists = (
-                session.query(SailingTrack)
+                session.query(model)
                 .filter_by(track_id=str(track_df.track_id[0]))
                 .first()
             )
             if record_exists:
-                logging.warning(f"record already exists {record_exists.id}")
+                logging.warning(f"record already exists {record_exists.track_id}")
             else:
                 logging.warning(
                     f"Sailing track is being saved with parameter 'if_exists=replace'"
                 )
                 track_df.to_postgis(
-                    SailingTrack.__tablename__,
+                    model.__tablename__,
                     engine,
-                    if_exists="replace",
+                    if_exists="append",
                     index=False,
                     dtype={"geometry": Geometry(geometry_type="POINT", srid=4326)},
                 )
                 logging.warning(f"Sailing track saved: {track_df.track_id[0]}")
     else:
-        track_df.to_file(
-            "SailingAnalysis.gpkg",
-            layer=name,
-            driver="GPKG",
-        )
-        logging.warning(f"Sailing track {name} saved on SailingAnalysis.gpkg")
+        if name in fiona.listlayers("SailingAnalysis.gpkg"):
+            logging.warning(f"{name} already exists")
+        else:
+            track_df.to_file(
+                "SailingAnalysis.gpkg",
+                layer=name,
+                driver="GPKG",
+            )
+            logging.warning(f"Sailing track {name} saved on SailingAnalysis.gpkg")
 
 
 def export_gpx(
@@ -94,15 +105,22 @@ def export_gpx(
     trajectory.add_timedelta(overwrite=True)
     trajectory.df.timedelta = trajectory.df.timedelta.dt.total_seconds()
     trajectory.df.direction = round(trajectory.df.direction, 1)
-
     # persist on database
+    track_df = track_df.drop("gpxtpx_TrackPointExtension", axis=1)
     save_track(
         track_df,
         name=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}_track_points",
-    )  # todo test if not saved yet
+        post_gis=True,
+        model=SailingTrackPoints
+    )
+    trajectory = trajectory.to_line_gdf()
+    trajectory = trajectory.drop("gpxtpx_TrackPointExtension", axis=1)
+    trajectory.crs = track_df.crs
     save_track(
-        trajectory.to_line_gdf(),
-        name=f"{trajectory.df.index[0].date().isoformat()}_{trajectory.df.track_id[0]}_trajectory",
+        track_df=trajectory,
+        name=f"{trajectory.t[0].date().isoformat()}_{trajectory.track_id[0]}_trajectory",
+        post_gis=True,
+        model=SailingTrackLine
     )
     return track_df, trajectory
 
@@ -116,7 +134,7 @@ def get_unique_hours(track_df):
 # OWM_DATA = {"DateTime": [], "lon": [], "lat": [], "wind_speed": [], "wind_deg": []}
 
 
-def get_OWM_data(track_df, step=2):
+def get_OWM_data(track_df, step=10):
     jsonl_path = Path(f"./data/{track_df.track_id[0]}_OWM_weather.jsonl")
     if jsonl_path.exists():
         logging.warning(f"{jsonl_path} already exists")
@@ -140,8 +158,8 @@ def get_OWM_data(track_df, step=2):
     return jsonl_path
 
 
-def process_OWM_data(track_df):
-    weather_lines = get_OWM_data(track_df, step=2)
+def process_OWM_data(track_df, step=1):
+    weather_lines = get_OWM_data(track_df, step=step)
     weather_data = pd.read_json(weather_lines, lines=True)
     weather_data = pd.concat(
         [
@@ -296,36 +314,6 @@ def create_traj_map(traj, map_title="Traj", start=None, stop=None, attribute="sp
         format="png",
     )
 
-
-# weather_data.columns
-
-
-# weather_data["temp"] = weather_data.current
-# weather.get("DateTime").append(gpx.time[ind])
-# weather.get("lat").append(gpx.geometry[ind].y)
-# weather.get("lon").append(gpx.geometry[ind].x)
-# weather.get("wind_speed").append(data.get("current").get("wind_speed"))
-# weather.get("wind_deg").append(data.get("current").get("wind_deg"))
-# weather_ = pd.DataFrame(weather)
-# weather_.iloc[0]
-# weather_.to_csv("./data/OpenWeatherMap.csv")
-
-
-# reading weather conditions
-# met = pd.read_csv(
-#     WEATHER_FORECAST
-# )  # source https://meteostat.net/en/station/87178?t=2023-04-04/2023-04-10
-# filtering columns
-# met = met[["time", "temp", "wdir", "wspd", "pres"]]
-# filtering row considering hour of the sailing track
-# met = met[met.time.isin(hours)]
-# met.time = pd.to_datetime(met.time, utc=True).dt.tz_convert(tz=BAIRES_TZ)
-# met["hora"] = pd.to_datetime(met.time, utc=False)
-# met = met.drop("time", axis=1)
-
-# todo descobrir o que estou fazendo
-# gpx = gpx.assign(hora=gpx.time.dt.strftime("%Y-%m-%d %H:00:00"))
-# gpx.hora = pd.to_datetime(gpx.hora, utc=False)
 
 # merge GPX and weather data
 # gpx = pd.merge(gpx, met, on="hora", how="left")

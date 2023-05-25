@@ -133,9 +133,9 @@ class Weather(Base):  # Todo relacionar com track_id
     created_at: Mapped[timestamp]
 
 
-class SailingTrack(Base):
-    __tablename__ = "sailing_track"
-    id: Mapped[int] = mapped_column(primary_key=True)  # todo use uuri
+class SailingTrackPoints(Base):
+    __tablename__ = "sailing_track_point"
+    id: Mapped[int] = mapped_column(primary_key=True)  # todo change to uuid
     track_id: Mapped[str] = mapped_column(
         nullable=False, comment="ID created from Datetime track iso as uuid"
     )
@@ -160,11 +160,59 @@ class SailingTrack(Base):
     )
     geometry = Column(Geometry(geometry_type="POINT", srid=4326))
 
+class SailingTrackLine(Base): # todo added
+    __tablename__ = "sailing_track_line"
+    id: Mapped[int] = mapped_column(primary_key=True)  # todo change to uuid
+    track_id: Mapped[str] = mapped_column(
+        nullable=False, comment="ID created from Datetime track iso as uuid"
+    )
+    track_fid: Mapped[int] = mapped_column(
+        nullable=False,
+        comment="Track feature ID",
+    )
+    track_seg_id: Mapped[int] = mapped_column(
+        nullable=False,
+        comment="Track segment ID",
+    )
+    track_seg_point_id: Mapped[int] = mapped_column(
+        nullable=False,
+        comment="Track segment point ID",
+    )
+    ele: Mapped[float] = mapped_column(
+        nullable=False,
+        comment="Elevation",
+    )
+    acceleration: Mapped[float] = mapped_column(
+        nullable=False, comment="Boat acceleration estimated from moving pandas"
+    )
+    angular_difference: Mapped[float] = mapped_column(
+        nullable=False, comment="Angular Difference from last segment estimated from moving pandas"
+    )
+    direction: Mapped[float] = mapped_column(
+        nullable=False, comment="Direction estimated from moving pandas"
+    )
+    distance: Mapped[float] = mapped_column(
+        nullable=False, comment="Travelled distance estimated from moving pandas"
+    )
+    speed: Mapped[float] = mapped_column(
+        nullable=False, comment="Boat speed estimated from moving pandas"
+    )
+    timedelta: Mapped[float] = mapped_column(
+        nullable=False, comment="The datetime of the observation"
+    )
+    t: Mapped[datetime] = mapped_column(
+        nullable=False, comment="The datetime of the observation"
+    )
+    prev_t: Mapped[datetime] = mapped_column(
+        nullable=False, comment="The datetime of the observation"
+    )
+    geometry = Column(Geometry(geometry_type="LINESTRING", srid=4326))
+
 
 class OWM_data(Base):  # Todo relacionar com track_id
     __tablename__ = "owm_data"
 
-    id: Mapped[int] = mapped_column(primary_key=True)  # todo use uuri
+    id: Mapped[int] = mapped_column(primary_key=True)  # todo change to uuid
     time: Mapped[datetime] = mapped_column(
         nullable=True, comment="The datetime of the observation	"
     )

@@ -44,7 +44,7 @@ def save_weather_data(weather_data, station_id):
     with Session() as session:
         record_exists = (
             session.query(Weather).filter_by(station=station_id).first()
-        )  # todo pensar em como colocar restricao
+        )  # todo pensar em como colocar restricao adicioando data tbm
         if record_exists:
             logging.warning(f"record already exists {record_exists.id}")
         else:
