@@ -50,11 +50,10 @@ def save_track(track_df, name, post_gis=False, model=SailingTrackPoints):
                 .first()
             )
             if record_exists:
-                logging.warning(f"record already exists {record_exists.track_id}")
-            else:
                 logging.warning(
-                    f"Sailing track is being saved with parameter 'if_exists=replace'"
+                    f"record already exists {record_exists.track_id} on {SailingTrackPoints.__tablename__}"
                 )
+            else:
                 track_df.to_postgis(
                     model.__tablename__,
                     engine,
@@ -62,7 +61,7 @@ def save_track(track_df, name, post_gis=False, model=SailingTrackPoints):
                     index=False,
                     dtype={"geometry": Geometry(geometry_type="POINT", srid=4326)},
                 )
-                logging.warning(f"Sailing track saved: {track_df.track_id[0]}")
+                logging.warning(f"{model.__tablename__} saved: {track_df.track_id[0]}")
     else:
         if name in fiona.listlayers("SailingAnalysis.gpkg"):
             logging.warning(f"{name} already exists")
@@ -78,6 +77,7 @@ def save_track(track_df, name, post_gis=False, model=SailingTrackPoints):
 def export_gpx(
     gpx_path="/mnt/Trabalho/DonCarlos_Tracks/Track_23-ABR-23 132017.gpx",
     layer="track_points",
+    to_postgis=True,
 ):
     gpx_path = Path(gpx_path)
     gpx_original = fiona.open(gpx_path, layer=layer)
@@ -92,6 +92,14 @@ def export_gpx(
     # create track_id
     track_df["track_id"] = create_id(track_df)
     track_df["track_id"] = str(track_df["track_id"][0])
+    # track_df = track_df.drop("gpxtpx_TrackPointExtension", axis=1)
+    save_track(
+        track_df,
+        name=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}_track_points",
+        post_gis=to_postgis,
+        model=SailingTrackPoints,
+    )
+
     # conversion to a movingpandas' track
     # test if track_seg_point_id column exist
     logging.warning(f"Creating trjectory from track points")
@@ -105,22 +113,16 @@ def export_gpx(
     trajectory.add_timedelta(overwrite=True)
     trajectory.df.timedelta = trajectory.df.timedelta.dt.total_seconds()
     trajectory.df.direction = round(trajectory.df.direction, 1)
+
     # persist on database
-    track_df = track_df.drop("gpxtpx_TrackPointExtension", axis=1)
-    save_track(
-        track_df,
-        name=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}_track_points",
-        post_gis=True,
-        model=SailingTrackPoints
-    )
     trajectory = trajectory.to_line_gdf()
-    trajectory = trajectory.drop("gpxtpx_TrackPointExtension", axis=1)
+    # trajectory = trajectory.drop("gpxtpx_TrackPointExtension", axis=1)
     trajectory.crs = track_df.crs
     save_track(
         track_df=trajectory,
         name=f"{trajectory.t[0].date().isoformat()}_{trajectory.track_id[0]}_trajectory",
-        post_gis=True,
-        model=SailingTrackLine
+        post_gis=to_postgis,
+        model=SailingTrackLine,
     )
     return track_df, trajectory
 
@@ -276,14 +278,15 @@ def create_map(track, map_title="Regata", start=None, stop=None, weather=None):
 
 def create_traj_map(traj, map_title="Traj", start=None, stop=None, attribute="speed"):
     traj = traj.copy()
+    traj.set_index('t', inplace=True)
     t = mpl.markers.MarkerStyle(marker="^")
     t2 = mpl.markers.MarkerStyle(marker="2")
     if start:
-        traj.df = traj.df[start:]
+        traj = traj[start:]
     if stop:
-        traj.df = traj.df[:stop]
+        traj = traj[:stop]
     # getting bound and expanding to the plot
-    aoi_bounds = traj.df.geometry.total_bounds
+    aoi_bounds = traj.geometry.total_bounds
     xlim = [aoi_bounds[0] - 0.0025, aoi_bounds[2] + 0.0025]
     ylim = [aoi_bounds[1] - 0.0025, aoi_bounds[3] + 0.0025]
 

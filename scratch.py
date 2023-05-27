@@ -90,7 +90,7 @@ ctx.add_basemap(ax, crs=gpx.crs)
 plt.show()
 
 # estimating about wind and boat direction
-wind_dir = traj.df.groupby(by=["wdir"]).size().sort_values(ascending=False)
+wind_dir = traj.groupby(by=["wdir"]).size().sort_values(ascending=False)
 boat_dir = traj.df.groupby(by=["direction"]).size().sort_values(ascending=False)
 boat_dir = pd.DataFrame(boat_dir)
 boat_dir.reset_index(inplace=True)
