@@ -131,11 +131,6 @@ def get_unique_hours(track_df):
     return track_df.time.dt.strftime("%Y-%m-%d %H:00:00").unique()
 
 
-# test from OpenWeatherMap
-# len(track_df) // 20  # amount of data to be requested
-# OWM_DATA = {"DateTime": [], "lon": [], "lat": [], "wind_speed": [], "wind_deg": []}
-
-
 def get_OWM_data(track_df, step=10):
     jsonl_path = Path(f"./data/{track_df.track_id[0]}_OWM_weather.jsonl")
     if jsonl_path.exists():
@@ -198,6 +193,9 @@ def save_OWM_data(owm_data):
 
 
 def create_map(track, map_title="Regata", start=None, stop=None, weather=None):
+    map_path = Path("./maps")
+    if not map_path.exists():
+        map_path.mkdir()
     t = mpl.markers.MarkerStyle(marker="^")
     if start:
         track = track[(track.time > start)]
@@ -263,7 +261,7 @@ def create_map(track, map_title="Regata", start=None, stop=None, weather=None):
     ctx.add_basemap(ax, crs=track.crs, source=ctx.providers.OpenStreetMap.get("Mapnik"))
     plt.title(map_title, fontdict={"size": 18})
     plt.savefig(
-        fname=f"{track.time.iloc[0].date().isoformat()}_{map_title}.png",
+        fname=f"{map_path}/{track.time.iloc[0].date().isoformat()}_{map_title}.png",
         dpi="figure",
         format="png",
     )
@@ -277,8 +275,11 @@ def create_map(track, map_title="Regata", start=None, stop=None, weather=None):
 
 
 def create_traj_map(traj, map_title="Traj", start=None, stop=None, attribute="speed"):
+    map_path = Path("./maps")
+    if not map_path.exists():
+        map_path.mkdir()
     traj = traj.copy()
-    traj.set_index('t', inplace=True)
+    traj.set_index("t", inplace=True)
     t = mpl.markers.MarkerStyle(marker="^")
     t2 = mpl.markers.MarkerStyle(marker="2")
     if start:
@@ -316,8 +317,3 @@ def create_traj_map(traj, map_title="Traj", start=None, stop=None, attribute="sp
         dpi="figure",
         format="png",
     )
-
-
-# merge GPX and weather data
-# gpx = pd.merge(gpx, met, on="hora", how="left")
-# gpx = gpx.dropna(axis=1)

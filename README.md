@@ -30,6 +30,11 @@ Package under construction to automate data analysis from sailing boats.
   - [ ] Sailing;
   - [ ] Maps;
 
+# TODOs:
+
+- [ ] Join weather data on traj dataframe;
+- [ ] Use [wind](https://metview.readthedocs.io/en/latest/gen_files/gallery/q_vector.html#gallery-q-vector) symbol in maps
+
 # Using:
 
 * Configuring the environment

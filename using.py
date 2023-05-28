@@ -1,5 +1,6 @@
 from spatial_tools import process_OWM_data, create_traj_map, export_gpx, create_map
 from datetime import datetime, timezone, timedelta
+
 BAIRES_TZ = timezone(timedelta(hours=-3))
 track_df, trajectory = export_gpx(
     gpx_path="/mnt/Trabalho/DonCarlos_Tracks/Track_23-ABR-23 132017.gpx",
@@ -41,9 +42,7 @@ create_traj_map(
     stop=datetime(2023, 4, 23, 13, 0),
 )
 
-weather_data[["wind_deg", 'wind_speed', 'time']]
-
-
+weather_data[["wind_deg", "wind_speed", "time"]]
 
 
 # Creating map with
@@ -53,5 +52,5 @@ create_map(
     map_title="Largada",
     start=datetime(2023, 4, 23, 10, 15, tzinfo=BAIRES_TZ),
     stop=datetime(2023, 4, 23, 10, 30, tzinfo=BAIRES_TZ),
-    weather=weather_data
+    weather=weather_data,
 )

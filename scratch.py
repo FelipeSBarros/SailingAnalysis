@@ -207,5 +207,3 @@ fig.update_traces(line=dict(width=5))
 # Want to get background map as well? It is possible:
 # https://chart-studio.plotly.com/~empet/14397/plotly-plot-of-a-map-from-data-available/#/
 fig.show()
-
-
