@@ -14,43 +14,26 @@ create_traj_map(
     map_title="Largada",
     start=datetime(2023, 4, 23, 10, 5),
     stop=datetime(2023, 4, 23, 10, 30),
+    weather=weather_data
 )
 create_traj_map(
     traj=trajectory,
-    map_title="Senida",
+    map_title="primeira perna",
     start=datetime(2023, 4, 23, 10, 20),
     stop=datetime(2023, 4, 23, 12, 0),
+    weather=weather_data
 )
 create_traj_map(
     traj=trajectory,
-    map_title="Popa",
+    map_title="segunda perna (Popa-través)",
     start=datetime(2023, 4, 23, 12),
     stop=datetime(2023, 4, 23, 12, 55),
+    weather=weather_data
 )
 create_traj_map(
     traj=trajectory,
     map_title="Toda regata",
     start=datetime(2023, 4, 23, 10, 5),
     stop=datetime(2023, 4, 23, 12, 55),
-)
-
-
-create_traj_map(
-    traj=trajectory,
-    map_title="Senida",
-    start=datetime(2023, 4, 23, 12, 38),
-    stop=datetime(2023, 4, 23, 13, 0),
-)
-
-weather_data[["wind_deg", "wind_speed", "time"]]
-
-
-# Creating map with
-
-create_map(
-    track=track_df,
-    map_title="Largada",
-    start=datetime(2023, 4, 23, 10, 15, tzinfo=BAIRES_TZ),
-    stop=datetime(2023, 4, 23, 10, 30, tzinfo=BAIRES_TZ),
-    weather=weather_data,
+    weather=weather_data
 )

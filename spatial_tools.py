@@ -216,6 +216,13 @@ def create_map(track, map_title="Regata", start=None, stop=None, weather=None):
     ax.set_ylim(ylim)
     track.plot(ax=ax)
     if weather is not None:
+        weather = weather.copy()
+        weather.set_index("time", inplace=True)
+        weather.index = weather.index.tz_localize(None)
+        if start:
+            weather = weather[start:]
+        if stop:
+            weather = weather[:stop]
         ax.barbs(
             weather["lon"] + 0.0005,
             weather["lat"] + 0.0005,
@@ -268,9 +275,16 @@ def create_traj_map(
         cmap="Reds",
     )
     if weather is not None:
+        weather = weather.copy()
+        weather.set_index("time", inplace=True)
+        weather.index = weather.index.tz_localize(None)
+        if start:
+            weather = weather[start:]
+        if stop:
+            weather = weather[:stop]
         ax.barbs(
-            weather["lon"] + 0.0005,
-            weather["lat"] + 0.0005,
+            weather["lon"],
+            weather["lat"],
             weather["wind_speed"]
             * (270 - weather["wind_deg"]).astype(float).apply(radians).apply(cos),
             weather["wind_speed"]
