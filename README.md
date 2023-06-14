@@ -19,21 +19,20 @@ Package under construction to automate data analysis from sailing boats.
 - Generate automatic analysis (weather data?):
   - [ ] Identifying `No-Go Zone` (45° from wind direction on both directions); 
   - [ ] Identifying the [Upwind, Beam Reaching and Downwind](https://www.nmma.org/lib/img/gallery/img13319214254.jpg) sailing segments of the trajectory;
-- Generate sailing report with:
-  - [ ] Trajectory segment for a specific date and time (start and end);
+- Generate sailing map with:
+  - [X] Trajectory segment for a specific date and time (start and end);
+  - [X] Trajectory and wind conditions using [wind brabs](#wind-barbs) [more info here](https://www.weather.gov/hfo/windbarbinfo);
   - [ ] Identify `OK` and `not OK` tacks;
-  - [ ] Trajectory for each boat information;
 
 - Generate sailing report with:
   - General overview about:
   - [ ] Weather conditions;
   - [ ] Sailing;
-  - [ ] Maps;
+  - [X] Maps;
 
 # TODOs:
 
 - [ ] Join weather data on traj dataframe;
-- [ ] Use [wind](https://metview.readthedocs.io/en/latest/gen_files/gallery/q_vector.html#gallery-q-vector) symbol in maps
 
 # Using:
 
@@ -67,3 +66,7 @@ To persist the change done in the [models.py](./models.py) migrations should be 
 ```commandline
 alembic upgrade head
 ```
+
+## Wind barbs
+
+![](https://www.metvuw.com/graphics/windsymbols.gif)

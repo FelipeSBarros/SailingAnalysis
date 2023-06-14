@@ -1,4 +1,7 @@
-.env
-.idea
-.png
-.gpkg
+*.env
+*.idea
+*.png
+*.gpkg
+*.jsonl
+*.db
+*__pycache__

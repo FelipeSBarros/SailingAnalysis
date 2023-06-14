@@ -3,6 +3,7 @@ from datetime import timezone, timedelta, datetime
 from pathlib import Path
 import contextily as ctx
 import requests
+from math import cos, sin, radians
 
 from models import (
     engine,
@@ -92,7 +93,7 @@ def export_gpx(
     # create track_id
     track_df["track_id"] = create_id(track_df)
     track_df["track_id"] = str(track_df["track_id"][0])
-    # track_df = track_df.drop("gpxtpx_TrackPointExtension", axis=1)
+    # track_df = track_df.drop("gpxtpx_TrackPointExtension", axis=1)  # confirmar necessidade
     save_track(
         track_df,
         name=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}_track_points",
@@ -196,7 +197,6 @@ def create_map(track, map_title="Regata", start=None, stop=None, weather=None):
     map_path = Path("./maps")
     if not map_path.exists():
         map_path.mkdir()
-    t = mpl.markers.MarkerStyle(marker="^")
     if start:
         track = track[(track.time > start)]
         if weather is not None:
@@ -215,49 +215,15 @@ def create_map(track, map_title="Regata", start=None, stop=None, weather=None):
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     track.plot(ax=ax)
-    if weather_data is not None:
-        for i, row in weather.iterrows():
-            # i, row = list(weather_data.iterrows())[0]
-            markersize = 25
-            t._transform = t.get_transform().rotate_deg(row.wind_deg)
-            # ax.scatter(row.lon, row.lat, marker=t, s=100)
-            plt.plot(
-                row.lon + 0.0005,
-                row.lat + 0.0005,
-                marker=(3, 0, row.wind_deg),
-                c="k",
-                markersize=15,
-                linestyle="None",
-                alpha=0.3,
-            )
-            plt.plot(
-                row.lon + 0.0005,
-                row.lat + 0.0005,
-                marker=(2, 0, row.wind_deg),
-                c="k",
-                markersize=30,
-                linestyle="None",
-                alpha=0.3,
-            )
-            plt.plot(
-                row.lon + 0.0005,
-                row.lat + 0.0005,
-                marker=(2, 0, row.wind_deg + 45),
-                c="red",
-                markersize=50,
-                linestyle="None",
-                alpha=0.3,
-            )
-            plt.plot(
-                row.lon + 0.0005,
-                row.lat + 0.0005,
-                marker=(2, 0, row.wind_deg - 45),
-                c="red",
-                markersize=50,
-                linestyle="None",
-                alpha=0.3,
-            )
-
+    if weather is not None:
+        ax.barbs(
+            weather["lon"] + 0.0005,
+            weather["lat"] + 0.0005,
+            weather["wind_speed"]
+            * (270 - weather["wind_deg"]).astype(float).apply(radians).apply(cos),
+            weather["wind_speed"]
+            * (270 - weather["wind_deg"]).astype(float).apply(radians).apply(sin),
+        )
     ctx.add_basemap(ax, crs=track.crs, source=ctx.providers.OpenStreetMap.get("Mapnik"))
     plt.title(map_title, fontdict={"size": 18})
     plt.savefig(
@@ -274,19 +240,18 @@ def create_map(track, map_title="Regata", start=None, stop=None, weather=None):
     # plt.show()
 
 
-def create_traj_map(traj, map_title="Traj", start=None, stop=None, attribute="speed"):
+def create_traj_map(
+    traj, map_title="Traj", start=None, stop=None, attribute="speed", weather=None
+):
     map_path = Path("./maps")
     if not map_path.exists():
         map_path.mkdir()
     traj = traj.copy()
     traj.set_index("t", inplace=True)
-    t = mpl.markers.MarkerStyle(marker="^")
-    t2 = mpl.markers.MarkerStyle(marker="2")
     if start:
         traj = traj[start:]
     if stop:
         traj = traj[:stop]
-    # getting bound and expanding to the plot
     aoi_bounds = traj.geometry.total_bounds
     xlim = [aoi_bounds[0] - 0.0025, aoi_bounds[2] + 0.0025]
     ylim = [aoi_bounds[1] - 0.0025, aoi_bounds[3] + 0.0025]
@@ -302,14 +267,15 @@ def create_traj_map(traj, map_title="Traj", start=None, stop=None, attribute="sp
         ax=ax,
         cmap="Reds",
     )
-
-    # for i, row in weather_data.iterrows():
-    #     markersize = 25
-    #     t._transform = t.get_transform().rotate_deg(row.wind_deg)
-    #     t2._transform = t2.get_transform().rotate_deg(row.wind_deg)
-    #     ax.scatter(row.lon, row.lat, marker=t, s=100)
-    # ax.plot(row.lon, row.lat, marker=t2, c='k', markersize=30, linestyle='None')
-
+    if weather is not None:
+        ax.barbs(
+            weather["lon"] + 0.0005,
+            weather["lat"] + 0.0005,
+            weather["wind_speed"]
+            * (270 - weather["wind_deg"]).astype(float).apply(radians).apply(cos),
+            weather["wind_speed"]
+            * (270 - weather["wind_deg"]).astype(float).apply(radians).apply(sin),
+        )
     ctx.add_basemap(ax, crs=traj.crs, source=ctx.providers.OpenStreetMap.get("Mapnik"))
     plt.title(map_title, fontdict={"size": 18})
     plt.savefig(
