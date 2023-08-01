@@ -2,8 +2,11 @@ import os
 from datetime import timezone, timedelta, datetime
 from pathlib import Path
 import contextily as ctx
+import numpy as np
 import requests
 from math import cos, sin, radians
+
+from geopy import Point
 
 from models import (
     engine,
@@ -35,7 +38,9 @@ GPX_FILE = Path("/mnt/Trabalho/DonCarlos_Tracks/Track_21-JUL-22 171218.gpx")
 TRACK_LAYER = "track_points"
 WEATHER_FORECAST = "./data/weather.csv"
 # defining local timezone
-BAIRES_TZ = timezone(timedelta(hours=-3))
+BAIRES_TZ = timezone(
+    timedelta(hours=-3)
+)  # todo, mudar para reconhecer da máquina. Mudar nome tbm
 
 
 def create_id(track_df):
@@ -93,7 +98,9 @@ def export_gpx(
     # create track_id
     track_df["track_id"] = create_id(track_df)
     track_df["track_id"] = str(track_df["track_id"][0])
-    # track_df = track_df.drop("gpxtpx_TrackPointExtension", axis=1)  # confirmar necessidade
+    track_df = track_df.drop(
+        "gpxtpx_TrackPointExtension", axis=1  # todo confirm necessity before drop
+    )  # confirmar necessidade
     save_track(
         track_df,
         name=f"{track_df.time[0].date().isoformat()}_{track_df.track_id[0]}_track_points",
@@ -156,7 +163,7 @@ def get_OWM_data(track_df, step=10):
     return jsonl_path
 
 
-def process_OWM_data(track_df, step=1):
+def process_OWM_data(track_df, step=1):  # todo rename lat and lon columns to latitude and longitude. # todo remove rename from save_owm  # todo change plot owm using longitud no lon anymore
     weather_lines = get_OWM_data(track_df, step=step)
     weather_data = pd.read_json(weather_lines, lines=True)
     weather_data = pd.concat(
@@ -189,7 +196,12 @@ def process_OWM_data(track_df, step=1):
 
 
 def save_OWM_data(owm_data):
-    owm_data.to_sql(OWM_data.__tablename__, engine, if_exists="append")
+    col_names = [c for c in owm_data.columns]
+    if "lat" in col_names or "lon" in col_names:
+        owm_data.rename(columns={"lon": "longitude", "lat": "latitude"}, inplace=True)
+
+    owm_data.rename({"lon": "longitude", "lat": "latitude"})
+    owm_data.to_sql(OWM_data.__tablename__, engine, if_exists="append", index=False)
     logging.warning(f"OWM data saved")
 
 
@@ -248,7 +260,14 @@ def create_map(track, map_title="Regata", start=None, stop=None, weather=None):
 
 
 def create_traj_map(
-    traj, map_title="Traj", start=None, stop=None, attribute="speed", weather=None
+    traj,
+    map_title="Traj",
+    start=None,
+    stop=None,
+    attribute="speed",
+    weather=None,
+    contra=None,
+    save=None,
 ):
     map_path = Path("./maps")
     if not map_path.exists():
@@ -292,8 +311,23 @@ def create_traj_map(
         )
     ctx.add_basemap(ax, crs=traj.crs, source=ctx.providers.OpenStreetMap.get("Mapnik"))
     plt.title(map_title, fontdict={"size": 18})
-    plt.savefig(
-        fname=f"{attribute}_{map_title}.png",
-        dpi="figure",
-        format="png",
-    )
+    if contra is not None:
+        traj["tack.x"] = traj.apply(
+            lambda x: [y for y in x.geometry.coords][0][0], axis=1
+        )
+        traj["tack.y"] = traj.apply(
+            lambda x: [y for y in x.geometry.coords][0][1], axis=1
+        )
+        col = np.where(
+            traj.angular_difference < 30,
+            "r",
+            np.where(traj.angular_difference > 100, "b", "r"),
+        )
+        ax.scatter(traj["tack.x"], traj["tack.y"], color=col)
+
+    if save is not None:
+        plt.savefig(
+            fname=f"{map_path}/{attribute}_{map_title}.png",
+            dpi="figure",
+            format="png",
+        )

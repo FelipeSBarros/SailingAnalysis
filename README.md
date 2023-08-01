@@ -1,3 +1,5 @@
+from movingpandas.trajectory_utils import convert_time_ranges_to_segments
+
 # Sailing Analysis
 
 Package under construction to automate data analysis from sailing boats.
@@ -36,15 +38,104 @@ Package under construction to automate data analysis from sailing boats.
 
 # Using:
 
-* Configuring the environment
+## Configuring the environment variables
 
-In order to use sailing data analysis it is nacessary to have set a `.env` file:
+In order to use sailing data analysis it is necessary to have set a `.env` file:
 ```commandline
 # .env
 OPENWEATHER_KEY='<your_key>'
 DB_URL='postgresql+psycopg2://<user>:<password>@172.17.0.2/<db_name>'
 ```
+if necessary, take a look on [.env-example](.env-example) file.
 
+## Applying migrations
+The following comando shound apply all migrations using alembic
+```commandline
+alembic upgrade head
+```
+
+## Exporting GPX to database
+
+Use [export_gpx](spatial_tools.py#81) function to export a gpx file to the database: 
+```python
+from spatial_tools import export_gpx
+
+track_df, trajectory = export_gpx(
+    gpx_path="path_to_the.gpx",
+    layer="track_points",
+)
+```
+
+This function will get the track_point from gpx, convert datetime data to Buenos Aires timezone, calculate a acceleration, angular difference, direction, distance and speed for each track segment, save as point and linestring geometries in the data base and return both as GeoDataFrame.
+
+## Exporting GPX to database
+[todo](https://geopandas.org/en/stable/docs/reference/api/geopandas.read_postgis.html)
+
+## Weather data:
+
+### retriving and processing weather data from Open Weather Map
+Use [process_OWM_data](spatial_tools.py#162) function to process weather data from Opwn Weather Map. This function will call [get_OWM_data](spatial_tools.py#138) which, after confirming there is weather data already saved for that track, will get coordinates and datime for each `step` parameter and retrieve the data (using OpenWeatherMap API) appending it to a jsonline.
+```python
+from spatial_tools import process_OWM_data
+owm_data = process_OWM_data(track_df)
+```
+
+### saving OWM data to database
+Use [save_OWM_data](spatial_tools.py#198) to save Open Weather Map data in the data base using [pandas.to_sql](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_sql.html);
+```python
+from spatial_tools import save_OWM_data
+save_OWM_data(owm_data)
+```
+
+### Creating maps
+
+#### Trajectory maps
+[create_traj_map](spatial_tools.py#262) creates the vizualization (A.K.A. map) of a [trajectory](https://movingpandas.readthedocs.io/en/main/trajectory.html) data
+```python
+from spatial_tools import create_traj_map
+create_traj_map(
+    traj=trajectory,
+    map_title="REGATA INDEPENDENCIA: entire",
+    save=True)
+```
+
+**Plot a section of a sailing track:**
+```python
+from datetime import datetime
+create_traj_map(
+    traj=trajectory,
+    map_title="REGATA INDEPENDENCIA: 1ra boya",
+    save=True,
+    start=datetime(2023, 7, 30, 9, 30),
+    stop=datetime(2023, 7, 30, 10, 41),
+)
+```
+
+
+**Adding contra info**
+```python
+create_traj_map(
+    traj=trajectory,
+    map_title="REGATA INDEPENDENCIA: 1ra boya - contra",
+    save=True,
+    start=datetime(2023, 7, 30, 9, 30),
+    stop=datetime(2023, 7, 30, 10, 41),
+    contra=True
+)
+```
+
+**Adding wind direction and speed info:**
+```python
+create_traj_map(
+    traj=trajectory,
+    map_title="REGATA INDEPENDENCIA: 1ra boya - contra",
+    save=True,
+    start=datetime(2023, 7, 30, 9, 30),
+    stop=datetime(2023, 7, 30, 10, 41),
+    contra=True,
+    weather=owm_data
+)
+```
 # Contributing
 
 ## Migrations:
