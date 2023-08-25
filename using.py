@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 
-from spatial_tools import process_OWM_data, create_traj_map, export_gpx
+from spatial_tools import process_OWM_data, create_traj_map, export_gpx, save_OWM_data
 
 BAIRES_TZ = timezone(timedelta(hours=-3))
 track_df, trajectory = export_gpx(
@@ -9,7 +9,7 @@ track_df, trajectory = export_gpx(
 )
 
 weather_data = process_OWM_data(track_df)
-
+save_OWM_data(weather_data)
 create_traj_map(
     traj=trajectory,
     map_title="Largada",
