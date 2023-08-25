@@ -35,6 +35,9 @@ Package under construction to automate data analysis from sailing boats.
 # TODOs:
 
 - [ ] Join weather data on traj dataframe;
+- [ ] Get [timezone information](spatial_tools.py#41) automatically from machine;
+- [ ] Create function to confirm if sailing track already exists. If exists, retrieve from database;
+- [ ] Create function to retrieve sailing track from database;
 
 # Using:
 

@@ -1,20 +1,17 @@
 import os
-from typing_extensions import Annotated
-from sqlalchemy.dialects.postgresql import UUID  # https://stackoverflow.com/a/74367684
-from sqlalchemy.schema import FetchedValue
 from datetime import datetime
-from sqlalchemy import func, Integer
+
 from dotenv import load_dotenv
-from sqlalchemy import String, Float, DateTime, ForeignKey, create_engine, Column
+from geoalchemy2 import Geometry
+from sqlalchemy import ForeignKey, create_engine, Column
+from sqlalchemy import func
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     mapped_column,
-    relationship,
     sessionmaker,
-    declarative_base,
 )
-from geoalchemy2 import Geometry
+from typing_extensions import Annotated
 
 load_dotenv()
 # DB_NAME = os.getenv("DB_NAME")
@@ -160,7 +157,8 @@ class SailingTrackPoints(Base):
     )
     geometry = Column(Geometry(geometry_type="POINT", srid=4326))
 
-class SailingTrackLine(Base): # todo added
+
+class SailingTrackLine(Base):  # todo added
     __tablename__ = "sailing_track_line"
     id: Mapped[int] = mapped_column(primary_key=True)  # todo change to uuid
     track_id: Mapped[str] = mapped_column(
@@ -186,7 +184,8 @@ class SailingTrackLine(Base): # todo added
         nullable=False, comment="Boat acceleration estimated from moving pandas"
     )
     angular_difference: Mapped[float] = mapped_column(
-        nullable=False, comment="Angular Difference from last segment estimated from moving pandas"
+        nullable=False,
+        comment="Angular Difference from last segment estimated from moving pandas",
     )
     direction: Mapped[float] = mapped_column(
         nullable=False, comment="Direction estimated from moving pandas"

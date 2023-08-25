@@ -1,34 +1,30 @@
+import logging
 import os
+import time
+import uuid
 from datetime import timezone, timedelta, datetime
-from pathlib import Path
-import contextily as ctx
-import numpy as np
-import requests
 from math import cos, sin, radians
+from pathlib import Path
 
-from geopy import Point
+import contextily as ctx
+import fiona
+import geopandas as gpd
+import jsonlines
+import matplotlib.pyplot as plt
+import movingpandas as mpd
+import numpy as np
+import pandas as pd
+import requests
+from dotenv import load_dotenv
+from geoalchemy2 import Geometry
 
 from models import (
     engine,
     Session,
-    WeatherStation,
-    Weather,
     SailingTrackPoints,
     OWM_data,
     SailingTrackLine,
 )
-import fiona
-import geopandas as gpd
-import movingpandas as mpd
-import pandas as pd
-from dotenv import load_dotenv
-import uuid
-import logging
-from geoalchemy2 import WKTElement, Geometry
-import jsonlines
-import time
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 
 load_dotenv()
 
@@ -38,9 +34,7 @@ GPX_FILE = Path("/mnt/Trabalho/DonCarlos_Tracks/Track_21-JUL-22 171218.gpx")
 TRACK_LAYER = "track_points"
 WEATHER_FORECAST = "./data/weather.csv"
 # defining local timezone
-BAIRES_TZ = timezone(
-    timedelta(hours=-3)
-)  # todo, mudar para reconhecer da máquina. Mudar nome tbm
+BAIRES_TZ = timezone(timedelta(hours=-3))
 
 
 def create_id(track_df):
@@ -163,7 +157,9 @@ def get_OWM_data(track_df, step=10):
     return jsonl_path
 
 
-def process_OWM_data(track_df, step=1):  # todo rename lat and lon columns to latitude and longitude. # todo remove rename from save_owm  # todo change plot owm using longitud no lon anymore
+def process_OWM_data(
+    track_df, step=1
+):  # todo rename lat and lon columns to latitude and longitude. # todo remove rename from save_owm  # todo change plot owm using longitud no lon anymore
     weather_lines = get_OWM_data(track_df, step=step)
     weather_data = pd.read_json(weather_lines, lines=True)
     weather_data = pd.concat(
